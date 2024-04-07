@@ -23,6 +23,8 @@
 #include "stm32f4xx_conf.h"
 #include "utils_math.h"
 #include <math.h>
+#include "terminal.h"
+#include "commands.h"
 #include "mc_interface.h"
 
 // Variables
@@ -38,6 +40,8 @@ static const I2CConfig i2cfg = {
 		STD_DUTY_CYCLE
 };
 
+// Private functions
+static void terminal_button_test(int argc, const char **argv);
 
 void hw_init_gpio(void) {
 
@@ -110,7 +114,14 @@ void hw_init_gpio(void) {
 	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);
 	palSetPadMode(GPIOC, 5, PAL_MODE_INPUT_ANALOG);
+
+	terminal_register_command_callback(
+			"test_button",
+			"Try sampling the shutdown button",
+			0,
+			terminal_button_test);
 }
+
 void hw_setup_adc_channels(void) {
 	// ADC1 regular channels
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);
@@ -275,3 +286,12 @@ float hw_Thor_get_temp(void) {
 	return res;
 }
 
+static void terminal_button_test(int argc, const char **argv) {
+	(void)argc;
+	(void)argv;
+
+	for (int i = 0;i < 40;i++) {
+		commands_printf("BT: %d %.2f", HW_SAMPLE_SHUTDOWN(), (double)bt_diff);
+		chThdSleepMilliseconds(100);
+	}
+}
